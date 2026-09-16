@@ -22,9 +22,12 @@ spec:
             image: python:3.11-slim
             workingDir: /workspace/source
             script: |
-              python -m pip install --no-cache-dir pydantic pytest
+              python -m pip install --no-cache-dir pydantic pytest ruff mypy
               python -m compileall app tools
               pytest -q
+              ruff check app tools tests
+              ruff format --check app tools tests
+              mypy
               test -s detections/suspicious_login.yaral
               grep -q 'meta:' detections/suspicious_login.yaral
               grep -q 'events:' detections/suspicious_login.yaral

@@ -2,9 +2,7 @@ from app.retrieval import retrieve_runbook
 
 
 def test_suspicious_login_retrieves_credential_compromise():
-    name, _, score = retrieve_runbook(
-        "suspicious login credential compromise failed authentication"
-    )
+    name, _, score = retrieve_runbook("suspicious login credential compromise failed authentication")
     assert name == "credential_compromise.md"
     assert score > 0
 

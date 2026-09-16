@@ -26,4 +26,3 @@ def test_prompt_injection_hostname_is_data_and_cannot_bypass_approval(tmp_path):
     )
     assert rejected.ok is False
     assert "approval" in rejected.error
-

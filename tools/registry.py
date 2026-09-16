@@ -1,10 +1,11 @@
 """Explicit allowlist: names, risk, request model, and implementation are fixed in code."""
 
 from dataclasses import dataclass
-from typing import Callable, Type
+from typing import Any, Callable, Type
 
 from pydantic import BaseModel
 
+from app.models import ToolRiskLevel
 from tools import implementations
 from tools.requests import (
     CheckIPReputationRequest,
@@ -14,7 +15,6 @@ from tools.requests import (
     RetrieveRunbookRequest,
     RevokeSessionsRequest,
 )
-from app.models import ToolRiskLevel
 
 
 @dataclass(frozen=True)
@@ -22,7 +22,7 @@ class ToolDefinition:
     name: str
     risk_level: ToolRiskLevel
     request_model: Type[BaseModel]
-    handler: Callable[[BaseModel], BaseModel]
+    handler: Callable[[Any], BaseModel]
 
 
 TOOL_REGISTRY: dict[str, ToolDefinition] = {

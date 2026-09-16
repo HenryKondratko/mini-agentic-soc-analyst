@@ -42,4 +42,3 @@ class AuditLogger:
         with self._lock, self.path.open("a", encoding="utf-8") as stream:
             stream.write(line + "\n")
         return event
-

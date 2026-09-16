@@ -14,6 +14,7 @@ for module_name in list(sys.modules):
     if module_name == "app" or module_name.startswith("app."):
         del sys.modules[module_name]
 
+
 @pytest.fixture
 def suspicious_alert() -> dict:
     return {

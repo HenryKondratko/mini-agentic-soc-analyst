@@ -7,16 +7,17 @@ It uses Pydantic, pytest, and the standard library (apart from Pydantic).
 ## Architecture
 
 ```text
-JSON alert -> validation -> read-only enrichment ─┐
-                         -> token-overlap runbook ├-> evidence + recommendations
-                         -> identity history ─────┘            |
+JSON alert -> validation -> event correlation ─────┐
+                         -> read-only enrichment ──┼-> confidence + evidence
+                         -> token-overlap runbook ─┘            |
                                                                v
                                                     typed guardrails -> audit JSONL
                                                     (approval required for impact)
 ```
 
 The workflow is intentionally a normal Python call graph:
-`app.investigate` -> `app.orchestrator` -> `tools.guardrails` -> explicit
+`app.investigate` -> `app.orchestrator` -> event correlation and confidence
+scoring -> `tools.guardrails` -> explicit
 `tools.registry`. No dynamic eval, arbitrary text-to-callable mapping, or LLM
 is involved. The no-LLM choice keeps this prototype reproducible,
 auditable, easy to test, and unable to grant a model direct tool authority. A
@@ -74,12 +75,15 @@ To leave the virtual environment later, run:
 deactivate
 ```
 
-## Run tests
+## Run tests and quality checks
 
 With the virtual environment activated:
 
 ```bash
 pytest
+ruff check app tools tests
+ruff format --check app tools tests
+mypy
 ```
 
 ## Demo
@@ -90,9 +94,26 @@ Run the suspicious-login investigation:
 python -m app.investigate samples/suspicious_login.json
 ```
 
-The CLI asks about exactly one high-impact recommendation. Enter `n` (or
-anything other than `y`/`yes`) to reject safely; enter `y` to run the simulated
-adapter. Every dispatch is appended to `logs/audit.jsonl`. The prompt-injection
+The investigation correlates repeated failed authentication events followed
+by a success (using legacy aggregate fields when events are absent), reports
+bounded confidence and uncertainty, and only recommends high-impact actions
+when independent evidence is sufficient. The CLI asks about exactly one
+high-impact recommendation. Enter `n` (or anything other than `y`/`yes`) to
+reject safely; enter `y` to run the simulated adapter. Every dispatch is
+appended to `logs/audit.jsonl`. For non-interactive use, print the result
+without dispatching an action:
+
+```bash
+python -m app.investigate --dry-run samples/suspicious_login.json
+```
+
+Approve one exact action from the printed recommendations:
+
+```bash
+python -m app.investigate --approve-action revoke_sessions samples/suspicious_login.json
+```
+
+Unknown or unlisted actions fail closed and are audited. The prompt-injection
 hostname sample remains data and is never interpreted as a tool instruction:
 
 ```bash
@@ -119,9 +140,9 @@ detection validation, and packaging.
 ## Limitations and next steps
 
 Threat intelligence and identity data are deterministic fixtures, retrieval is
-simple token overlap, and tool responses are mocked. A production version
-would add real provider adapters, durable audit storage, authorization and
-secret management, richer evidence correlation, and policy-based approvals.
-Future improvements explicitly include a lint/type-check toolchain (for
-example Ruff and mypy/pyright) and an optional local LLM for bounded
-summarization or retrieval assistance, never direct tool authority.
+simple token overlap, and tool responses are mocked. Event correlation is
+limited to ordered authentication events for one user and a bounded window.
+A production version would add real provider adapters, durable audit storage,
+authorization and secret management, richer evidence correlation, and
+policy-based approvals. An optional local LLM could assist bounded
+summarization or retrieval, never direct tool authority.

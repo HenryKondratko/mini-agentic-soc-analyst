@@ -26,4 +26,3 @@ class ToolDispatchResult(BaseModel):
     ok: bool
     result: object | None = None
     error: str | None = None
-

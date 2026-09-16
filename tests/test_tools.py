@@ -7,12 +7,8 @@ from tools.guardrails import dispatch_tool
 
 def test_deterministic_threat_intel_and_identity(tmp_path):
     logger = AuditLogger(tmp_path / "audit.jsonl")
-    intel = dispatch_tool(
-        "check_ip_reputation", {"ip": "185.22.14.8"}, alert_id="a", audit_logger=logger
-    )
-    identity = dispatch_tool(
-        "lookup_identity_history", {"username": "jsmith"}, alert_id="a", audit_logger=logger
-    )
+    intel = dispatch_tool("check_ip_reputation", {"ip": "185.22.14.8"}, alert_id="a", audit_logger=logger)
+    identity = dispatch_tool("lookup_identity_history", {"username": "jsmith"}, alert_id="a", audit_logger=logger)
     assert intel.ok and intel.result.score == 92
     assert intel.result.risk_level == Severity.HIGH
     assert intel.result.country == "Netherlands"
@@ -33,9 +29,7 @@ def test_unknown_ip_is_low_risk(tmp_path):
 
 def test_read_only_allowed_high_impact_requires_approval(tmp_path):
     logger = AuditLogger(tmp_path / "audit.jsonl")
-    rejected = dispatch_tool(
-        "revoke_sessions", {"username": "jsmith"}, alert_id="a", audit_logger=logger
-    )
+    rejected = dispatch_tool("revoke_sessions", {"username": "jsmith"}, alert_id="a", audit_logger=logger)
     approved = dispatch_tool(
         "revoke_sessions",
         {"username": "jsmith"},
@@ -54,4 +48,3 @@ def test_unknown_tool_and_bad_args_fail_closed(tmp_path):
     assert not unknown.ok and not bad.ok
     events = [json.loads(line) for line in (tmp_path / "audit.jsonl").read_text().splitlines()]
     assert all(event["decision"] == "REJECTED" for event in events)
-

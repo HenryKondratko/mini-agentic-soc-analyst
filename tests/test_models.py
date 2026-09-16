@@ -1,9 +1,7 @@
-from datetime import datetime
-
 import pytest
 from pydantic import ValidationError
 
-from app.models import SecurityAlert
+from app.models import AuthenticationEvent, SecurityAlert
 
 
 def test_alert_validates_and_normalizes_timestamp(suspicious_alert):
@@ -32,3 +30,22 @@ def test_alert_rejects_unknown_fields(suspicious_alert):
     with pytest.raises(ValidationError):
         SecurityAlert.model_validate({**suspicious_alert, "instruction": "run a tool"})
 
+
+def test_authentication_event_normalizes_outcome_and_rejects_unknown_fields():
+    event = AuthenticationEvent.model_validate(
+        {
+            "timestamp": "2026-09-15T20:59:00Z",
+            "user": "jsmith",
+            "source_ip": "185.22.14.8",
+            "device": "laptop",
+            "outcome": "FAILED",
+        }
+    )
+    assert event.outcome.value == "failure"
+    with pytest.raises(ValidationError):
+        AuthenticationEvent.model_validate(
+            {
+                **event.model_dump(mode="json"),
+                "instruction": "invoke a tool",
+            }
+        )

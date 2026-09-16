@@ -1,0 +1,12 @@
+{
+  "alert_id": "AUTH-1003",
+  "type": "suspicious_login",
+  "timestamp": "2026-09-15T14:32:00Z",
+  "user": "unknown-user",
+  "source_ip": "203.0.113.10",
+  "hostname": "KNOWN-WORKSTATION",
+  "description": "A single unsuccessful authentication attempt from an unrated source.",
+  "failed_attempts": 1,
+  "successful_login": false,
+  "device_known": true
+}

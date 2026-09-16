@@ -29,4 +29,3 @@ class ForcePasswordResetRequest(_Request):
 
 class IsolateEndpointRequest(_Request):
     hostname: str = Field(min_length=1)
-

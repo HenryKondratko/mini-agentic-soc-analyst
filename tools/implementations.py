@@ -71,4 +71,3 @@ def force_password_reset(request: ForcePasswordResetRequest) -> ToolResponse:
 
 def isolate_endpoint(request: IsolateEndpointRequest) -> ToolResponse:
     return ToolResponse(message=f"Simulated endpoint isolation for {request.hostname}; no external change made.")
-

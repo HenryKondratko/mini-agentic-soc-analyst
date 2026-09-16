@@ -8,5 +8,29 @@
   "description": "Seventeen failed authentication attempts followed by a successful login from an unfamiliar device.",
   "failed_attempts": 17,
   "successful_login": true,
-  "device_known": false
+  "device_known": false,
+  "events": [
+    {
+      "timestamp": "2026-09-15T14:25:00Z",
+      "username": "jsmith",
+      "source_ip": "185.22.14.8",
+      "hostname": "LAPTOP-4832",
+      "outcome": "failure",
+      "metadata": {"provider": "vpn"}
+    },
+    {
+      "timestamp": "2026-09-15T14:28:00Z",
+      "username": "jsmith",
+      "source_ip": "185.22.14.8",
+      "hostname": "LAPTOP-4832",
+      "outcome": "failed"
+    },
+    {
+      "timestamp": "2026-09-15T14:32:00Z",
+      "username": "jsmith",
+      "source_ip": "185.22.14.8",
+      "hostname": "LAPTOP-4832",
+      "outcome": "success"
+    }
+  ]
 }

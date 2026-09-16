@@ -28,6 +28,48 @@ class ToolRiskLevel(str, Enum):
     HIGH_IMPACT = "HIGH_IMPACT"
 
 
+class AuthenticationOutcome(str, Enum):
+    FAILURE = "failure"
+    SUCCESS = "success"
+
+
+class AuthenticationEvent(BaseModel):
+    """One normalized authentication observation from a trusted event source."""
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    timestamp: datetime
+    username: str = Field(min_length=1, validation_alias=AliasChoices("username", "user"))
+    source_ip: IPvAnyAddress
+    hostname: str = Field(min_length=1, validation_alias=AliasChoices("hostname", "device"))
+    outcome: AuthenticationOutcome
+    metadata: dict[str, Any] | None = None
+
+    @field_validator("timestamp")
+    @classmethod
+    def timestamp_must_be_timezone_aware(cls, value: datetime) -> datetime:
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("timestamp must include a timezone")
+        return value.astimezone(timezone.utc)
+
+    @field_validator("outcome", mode="before")
+    @classmethod
+    def normalize_outcome(cls, value: object) -> object:
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"fail", "failed", "failure"}:
+                return AuthenticationOutcome.FAILURE
+            if normalized in {"ok", "success", "succeeded"}:
+                return AuthenticationOutcome.SUCCESS
+        return value
+
+    @property
+    def device(self) -> str:
+        """Compatibility view for event sources that call the hostname a device."""
+
+        return self.hostname
+
+
 class SecurityAlert(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
@@ -44,6 +86,7 @@ class SecurityAlert(BaseModel):
     failed_attempts: int = Field(default=0, ge=0)
     successful_login: bool = False
     device_known: bool = False
+    events: list[AuthenticationEvent] | None = None
 
     @field_validator("timestamp")
     @classmethod
@@ -83,6 +126,15 @@ class RecommendedAction(BaseModel):
     rationale: str = Field(min_length=1)
 
 
+class EvidenceSignal(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    signal: str = Field(min_length=1)
+    classification: str = Field(min_length=1)
+    detail: str = Field(min_length=1)
+    score: int = Field(ge=0, le=100)
+
+
 class InvestigationResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -92,6 +144,9 @@ class InvestigationResult(BaseModel):
     matched_runbook: str
     retrieval_score: int = Field(ge=0)
     evidence: list[str] = Field(min_length=1)
+    evidence_signals: list[EvidenceSignal] = Field(default_factory=list)
+    confidence: int = Field(ge=0, le=100)
+    uncertainty: list[str] = Field(default_factory=list)
     severity: Severity
     possible_threat: str = Field(min_length=1)
     recommendations: list[RecommendedAction] = Field(default_factory=list)
