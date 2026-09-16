@@ -1,0 +1,41 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: mini-agentic-soc-analyst
+spec:
+  tasks:
+    - name: checkout
+      taskSpec:
+        steps:
+          - name: checkout
+            image: alpine/git
+            script: |
+              git clone "$(params.repository)" /workspace/source
+        params:
+          - name: repository
+            type: string
+    - name: install-validate-test
+      runAfter: [checkout]
+      taskSpec:
+        steps:
+          - name: verify
+            image: python:3.11-slim
+            workingDir: /workspace/source
+            script: |
+              python -m pip install --no-cache-dir pydantic pytest
+              python -m compileall app tools
+              pytest -q
+              test -s detections/suspicious_login.yaral
+              grep -q 'meta:' detections/suspicious_login.yaral
+              grep -q 'events:' detections/suspicious_login.yaral
+              grep -q 'match:' detections/suspicious_login.yaral
+              grep -q 'condition:' detections/suspicious_login.yaral
+              printf 'n\n' | python -m app.investigate samples/suspicious_login.json
+    - name: package
+      runAfter: [install-validate-test]
+      taskSpec:
+        steps:
+          - name: package
+            image: alpine:3.20
+            script: |
+              tar -czf /workspace/output/mini-agentic-soc-analyst.tgz app tools knowledge detections samples

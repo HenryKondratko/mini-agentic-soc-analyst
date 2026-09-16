@@ -1,0 +1,12 @@
+{
+  "alert_id": "AUTH-1001",
+  "type": "suspicious_login",
+  "timestamp": "2026-09-15T14:32:00Z",
+  "user": "jsmith",
+  "source_ip": "185.22.14.8",
+  "hostname": "LAPTOP-4832",
+  "description": "Seventeen failed authentication attempts followed by a successful login from an unfamiliar device.",
+  "failed_attempts": 17,
+  "successful_login": true,
+  "device_known": false
+}

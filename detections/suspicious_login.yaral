@@ -1,0 +1,21 @@
+// Illustrative YARA-L detection-as-code. The executable response remains
+// behind the typed registry and explicit approval guardrail.
+rule suspicious_login {
+  meta:
+    author = "mini-agentic-soc-analyst"
+    description = "Suspicious login from a high-risk source"
+    severity = "HIGH"
+  events:
+    $failed.metadata.event_type = "authentication"
+    $failed.security_result.action = "FAIL"
+    $failed.principal.user.userid = $user
+    $failed.target.ip = $source_ip
+    $success.metadata.event_type = "authentication"
+    $success.security_result.action = "SUCCESS"
+    $success.principal.user.userid = $user
+    $success.target.ip = $source_ip
+  match:
+    $user over 10m
+  condition:
+    #event($failed) >= 5 and #event($success) >= 1
+}
